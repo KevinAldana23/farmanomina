@@ -1,10 +1,8 @@
 'use server';
 
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '@/lib/prisma';
 import { calculatePayroll, PayrollNovedades, LegalConfig as ParsedConfig } from '@/lib/payrollEngine';
 import { revalidatePath } from 'next/cache';
-
-const prisma = new PrismaClient();
 
 export async function savePayrollPeriodAction(data: {
   startDate: string;

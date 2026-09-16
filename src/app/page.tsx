@@ -1,8 +1,6 @@
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '@/lib/prisma';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Users, Activity, FileText } from 'lucide-react';
-
-const prisma = new PrismaClient();
 
 export default async function DashboardPage() {
   const employeesCount = await prisma.employee.count({ 
