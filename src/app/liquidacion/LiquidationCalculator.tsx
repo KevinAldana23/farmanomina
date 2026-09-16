@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useMemo, useEffect } from 'react';
+import Image from 'next/image';
 import { LegalConfig } from '@prisma/client';
 import { calculateFinalLiquidation, LegalConfig as ParsedConfig } from '@/lib/payrollEngine';
 import { saveFinalLiquidation } from '../actions/payrollActions';
@@ -350,7 +351,33 @@ export default function LiquidationCalculator({
             {result && !hasError && (
               <Card className="bg-slate-50 border-blue-100 print:shadow-none print:border-none print:bg-white print:col-span-2">
                 <CardHeader className="bg-blue-50/50 pb-4 border-b print:bg-white print:border-b-2 print:border-black">
-                  <CardTitle className="text-blue-800 text-lg flex justify-between items-center print:text-black">
+                  {/* Pharmacy Branding Header on Liquidation Receipt */}
+                  <div className="flex items-center justify-between gap-3 pb-3 border-b border-blue-200/60 print:border-slate-300">
+                    <div className="flex items-center gap-2.5">
+                      <Image
+                        src="/images/01_icono_farmacia_transparente.png"
+                        alt="Farmacia Su Salud"
+                        width={36}
+                        height={36}
+                        className="w-9 h-9 object-contain rounded"
+                      />
+                      <div>
+                        <h3 className="font-bold text-sm sm:text-base tracking-tight text-slate-900 leading-tight">FARMACIA SU SALUD</h3>
+                        <p className="text-[11px] text-slate-500 font-medium">Liquidación Definitiva de Contrato Laboral</p>
+                      </div>
+                    </div>
+                    <div className="hidden sm:flex items-center print:flex">
+                      <Image
+                        src="/images/02_logo_horizontal_transparente.png"
+                        alt="Farmacia Su Salud"
+                        width={160}
+                        height={36}
+                        className="h-7 w-auto object-contain print:h-8"
+                      />
+                    </div>
+                  </div>
+
+                  <CardTitle className="text-blue-800 text-lg flex justify-between items-center print:text-black pt-2">
                     <span>Liquidación — {selectedEmp?.name.split(' ')[0]} <span className="text-2xl ml-2">{formatCurrency(result.netPay)}</span></span>
                     <div className="flex gap-2 print:hidden">
                       <Button variant="outline" className="bg-white border-blue-200 text-blue-700 hover:bg-blue-50" onClick={() => window.print()}>🖨️ Imprimir</Button>

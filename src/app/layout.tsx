@@ -16,8 +16,13 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "FarmaNómina",
-  description: "Sistema de nómina para Farmacia Su Salud",
+  title: "FarmaNómina | Farmacia Su Salud",
+  description: "Sistema de nómina y liquidación para Farmacia Su Salud",
+  icons: {
+    icon: '/images/01_icono_farmacia_transparente.png',
+    shortcut: '/images/01_icono_farmacia_transparente.png',
+    apple: '/images/01_icono_farmacia.png',
+  },
 };
 
 export default async function RootLayout({

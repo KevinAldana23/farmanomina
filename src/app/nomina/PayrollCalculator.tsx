@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useMemo, useCallback } from 'react';
+import Image from 'next/image';
 
 import { Employee, LegalConfig } from '@prisma/client';
 import { calculatePayroll, PayrollNovedades, LegalConfig as ParsedConfig } from '@/lib/payrollEngine';
@@ -443,7 +444,33 @@ export default function PayrollCalculator({ employees, configs }: { employees: E
       {result && (
         <Card className="bg-slate-50 border-emerald-100 print:shadow-none print:border-none print:bg-white print:col-span-2">
           <CardHeader className="bg-emerald-50/50 pb-4 border-b print:bg-white print:border-b-2 print:border-black">
-            <CardTitle className="text-emerald-800 text-base sm:text-lg flex flex-col sm:flex-row sm:items-center justify-between gap-3 print:text-black">
+            {/* Pharmacy Branding Header on Payslip */}
+            <div className="flex items-center justify-between gap-3 pb-3 border-b border-emerald-200/60 print:border-slate-300">
+              <div className="flex items-center gap-2.5">
+                <Image
+                  src="/images/01_icono_farmacia_transparente.png"
+                  alt="Farmacia Su Salud"
+                  width={36}
+                  height={36}
+                  className="w-9 h-9 object-contain rounded"
+                />
+                <div>
+                  <h3 className="font-bold text-sm sm:text-base tracking-tight text-slate-900 leading-tight">FARMACIA SU SALUD</h3>
+                  <p className="text-[11px] text-slate-500 font-medium">Comprobante Oficial de Nómina</p>
+                </div>
+              </div>
+              <div className="hidden sm:flex items-center print:flex">
+                <Image
+                  src="/images/02_logo_horizontal_transparente.png"
+                  alt="Farmacia Su Salud"
+                  width={160}
+                  height={36}
+                  className="h-7 w-auto object-contain print:h-8"
+                />
+              </div>
+            </div>
+
+            <CardTitle className="text-emerald-800 text-base sm:text-lg flex flex-col sm:flex-row sm:items-center justify-between gap-3 print:text-black pt-2">
               <span className="truncate">Desprendible de Pago - {selectedEmp.name}</span>
               <div className="flex items-center justify-between sm:justify-end gap-3 w-full sm:w-auto">
                 <span className="font-bold text-base sm:text-lg">{formatCurrency(result.netPay)} Neto</span>
@@ -452,7 +479,7 @@ export default function PayrollCalculator({ employees, configs }: { employees: E
                   className="px-3 py-1.5 bg-emerald-600 text-white rounded-md text-xs sm:text-sm hover:bg-emerald-700 print:hidden flex items-center gap-1.5 transition-colors"
                   title="Imprimir Desprendible"
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="14" y="14" width="12" height="8"></rect></svg>
                   <span>Imprimir</span>
                 </button>
               </div>

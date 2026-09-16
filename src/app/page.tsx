@@ -1,3 +1,4 @@
+import Image from 'next/image';
 import { prisma } from '@/lib/prisma';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Users, Activity, FileText } from 'lucide-react';
@@ -31,11 +32,57 @@ export default async function DashboardPage() {
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto space-y-6 sm:space-y-8">
-      <div>
-        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">¡Bienvenida a FarmaNómina!</h1>
-        <p className="text-sm sm:text-base text-muted-foreground mt-1">
-          Aquí tienes un resumen del estado actual de tu farmacia.
-        </p>
+      {/* Pharmacy Corporate Hero Header */}
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-slate-900 via-slate-900 to-slate-950 border border-slate-800 p-6 sm:p-7 shadow-xl">
+        <div className="absolute right-0 top-0 bottom-0 w-1/2 opacity-5 pointer-events-none flex items-center justify-end overflow-hidden pr-6">
+          <Image
+            src="/images/01_icono_farmacia_transparente.png"
+            alt=""
+            width={240}
+            height={240}
+            className="object-contain"
+          />
+        </div>
+        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-5">
+          <div className="flex items-start sm:items-center gap-4">
+            <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-slate-800/80 border border-slate-700/60 p-2 shadow-inner flex items-center justify-center shrink-0">
+              <Image
+                src="/images/01_icono_farmacia_transparente.png"
+                alt="Logo Farmacia Su Salud"
+                width={56}
+                height={56}
+                priority
+                className="w-full h-full object-contain drop-shadow"
+              />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-orange-500/15 text-orange-400 border border-orange-500/30">
+                  Farmacia Su Salud
+                </span>
+                <span className="text-xs text-slate-400 hidden sm:inline">• Sistema de Nómina y Liquidación</span>
+              </div>
+              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white mt-1.5">
+                ¡Bienvenida a FarmaNómina!
+              </h1>
+              <p className="text-xs sm:text-sm text-slate-300 mt-1 max-w-xl">
+                Panel integral de nómina, liquidación de personal y reportes con normativa legal colombiana vigente.
+              </p>
+            </div>
+          </div>
+
+          <div className="hidden lg:flex items-center shrink-0">
+            <div className="rounded-xl bg-slate-950/80 border border-slate-800 p-2 shadow-lg">
+              <Image
+                src="/images/02_logo_horizontal_transparente.png"
+                alt="Farmacia Su Salud"
+                width={220}
+                height={55}
+                className="h-11 w-auto object-contain"
+              />
+            </div>
+          </div>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
