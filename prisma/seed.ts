@@ -7,8 +7,8 @@ const mockConfigData = {
   auxilioTransporte: 249095,
   topeAuxilioTransporteEnSMMLV: 2,
   jornada: {
-    horasSemanales: 44,
-    divisorHoraOrdinaria: 220,
+    horasSemanales: 42,
+    divisorHoraOrdinaria: 210,
     horaInicioNocturno: '19:00',
     horaFinNocturno: '06:00'
   },
@@ -39,7 +39,7 @@ const mockConfigData = {
     recargoNocturno: 0.35,
     horaExtraDiurna: 0.25,
     horaExtraNocturna: 0.75,
-    dominicalFestivoDiurno: 0.90, // 90% para 2026-2027
+    dominicalFestivoDiurno: 0.90, // 90% para Julio 2026 - Junio 2027
     dominicalFestivoNocturno: 1.25,
     extraDiurnaDominicalFestivo: 2.15,
     extraNocturnaDominicalFestivo: 2.65
@@ -51,27 +51,17 @@ const mockConfigData = {
 async function main() {
   console.log('Seeding database...');
 
-  // 1. Legal Config
+  // 1. Legal Config (Vigente a partir de Julio 2026: 42h, divisor 210, recargo dominical 90%)
   await prisma.legalConfig.create({
     data: {
-      validFrom: new Date('2026-01-01T00:00:00.000Z'),
+      validFrom: new Date('2026-07-01T00:00:00.000Z'),
       configData: JSON.stringify(mockConfigData)
     }
   });
 
-  // 2. Employees
+  // 2. Employees (1 empleado de prueba)
   const employees = [
     { name: 'Ana Gómez', document: '101010101', position: 'Director técnico / Regente', baseSalary: 2600000, arlRiskClass: 'I', contractType: 'Indefinido' },
-    { name: 'Carlos Díaz', document: '102020202', position: 'Administrador', baseSalary: 2200000, arlRiskClass: 'I', contractType: 'Indefinido' },
-    ...Array.from({ length: 10 }).map((_, i) => ({
-      name: `Auxiliar ${i + 1}`, document: `20000000${i}`, position: 'Auxiliar de Droguería', baseSalary: 1750905, arlRiskClass: 'I', contractType: 'Fijo'
-    })),
-    ...Array.from({ length: 3 }).map((_, i) => ({
-      name: `Cajero ${i + 1}`, document: `30000000${i}`, position: 'Cajero', baseSalary: 1750905, arlRiskClass: 'I', contractType: 'Fijo'
-    })),
-    ...Array.from({ length: 3 }).map((_, i) => ({
-      name: `Domiciliario ${i + 1}`, document: `40000000${i}`, position: 'Domiciliario', baseSalary: 1800000, arlRiskClass: 'IV', contractType: 'Fijo'
-    })),
   ];
 
   for (const emp of employees) {
