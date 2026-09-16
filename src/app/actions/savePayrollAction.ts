@@ -79,6 +79,7 @@ export async function savePayrollPeriodAction(data: {
     revalidatePath('/');
     revalidatePath('/nomina');
     revalidatePath('/reportes');
+    revalidatePath('/auditoria');
     return { success: true, periodId: period.id };
 
   });

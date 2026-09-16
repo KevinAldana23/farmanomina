@@ -4,14 +4,16 @@ import React, { useState, useMemo, useEffect } from 'react';
 import Image from 'next/image';
 import { LegalConfig } from '@prisma/client';
 import { calculateFinalLiquidation, LegalConfig as ParsedConfig } from '@/lib/payrollEngine';
-import { saveFinalLiquidation } from '../actions/payrollActions';
+import { saveFinalLiquidation, getEmployeeHistoricalAverages, HistoricalAveragesResult } from '../actions/payrollActions';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Sparkles, RotateCcw, Info, CheckCircle2, History, ShieldCheck } from 'lucide-react';
 
 // ── Tipos extendidos con la relación de Prisma ─────────────────────────────
 type FinalLiquidationRecord = {
@@ -83,6 +85,16 @@ export default function LiquidationCalculator({
   const selectedEmp = employees.find(e => e.id === selectedEmpId);
   const alreadyLiquidated = !!selectedEmp?.finalLiquidation;
 
+  // Estados para bases salariales CST (automáticas / editables)
+  const [historicalData, setHistoricalData] = useState<HistoricalAveragesResult | null>(null);
+  const [isLoadingHistory, setIsLoadingHistory] = useState(false);
+  const [customBases, setCustomBases] = useState({
+    severanceBase: 0,
+    premiumBase: 0,
+    vacationBase: 0,
+  });
+  const [isCustomBasesModified, setIsCustomBasesModified] = useState(false);
+
   const formatCurrency = (val: number) =>
     new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(val);
 
@@ -113,6 +125,7 @@ export default function LiquidationCalculator({
     return last < hire ? hire : last;
   };
 
+  // Cálculo proporcional de días según fechas
   useEffect(() => {
     if (!selectedEmp || !inputs.terminationDate || alreadyLiquidated) return;
     const termDate = new Date(inputs.terminationDate);
@@ -146,6 +159,39 @@ export default function LiquidationCalculator({
     }));
   }, [selectedEmp, selectedEmpId, inputs.terminationDate, alreadyLiquidated]);
 
+  // Consulta y sugerencia automática de promedios de variables según historial en FarmaNómina
+  useEffect(() => {
+    let isSubscribed = true;
+
+    if (!selectedEmp || alreadyLiquidated || !inputs.terminationDate) {
+      return;
+    }
+
+    const fetchAverages = async () => {
+      try {
+        setIsLoadingHistory(true);
+        const res = await getEmployeeHistoricalAverages(selectedEmp.id, inputs.terminationDate);
+        if (!isSubscribed) return;
+        setHistoricalData(res);
+        setCustomBases({
+          severanceBase: res.suggestedSeveranceBase,
+          premiumBase: res.suggestedPremiumBase,
+          vacationBase: res.suggestedVacationBase,
+        });
+        setIsCustomBasesModified(false);
+      } catch (err) {
+        console.error('Error al calcular promedios históricos:', err);
+      } finally {
+        if (isSubscribed) setIsLoadingHistory(false);
+      }
+    };
+
+    fetchAverages();
+
+    return () => {
+      isSubscribed = false;
+    };
+  }, [selectedEmp, inputs.terminationDate, alreadyLiquidated]);
 
   const activeConfig = useMemo(() => {
     const pDate = new Date(inputs.terminationDate);
@@ -156,6 +202,7 @@ export default function LiquidationCalculator({
   const [isSaving, setIsSaving] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
+  // Motor de liquidación con soporte para bases CST personalizadas / históricas
   const result = useMemo(() => {
     try {
       if (!selectedEmp || !activeConfig || alreadyLiquidated) return null;
@@ -163,23 +210,53 @@ export default function LiquidationCalculator({
         validFrom: activeConfig.validFrom.toString(),
         configData: JSON.parse(activeConfig.configData),
       };
+
+      const appliedBases = (customBases.severanceBase > 0 || customBases.premiumBase > 0 || customBases.vacationBase > 0)
+        ? customBases
+        : undefined;
+
       return calculateFinalLiquidation(
-        { baseSalary: selectedEmp.baseSalary, isIntegralSalary: selectedEmp.isIntegralSalary, arlRiskClass: selectedEmp.arlRiskClass, hireDate: selectedEmp.hireDate.toString() },
-        inputs.terminationDate, inputs.reason,
-        inputs.daysWorkedYear, inputs.daysWorkedSemester,
-        inputs.vacationDaysOwed, inputs.pendingSalaryDays,
-        parsedConfig
+        {
+          baseSalary: selectedEmp.baseSalary,
+          isIntegralSalary: selectedEmp.isIntegralSalary,
+          arlRiskClass: selectedEmp.arlRiskClass,
+          hireDate: selectedEmp.hireDate.toString(),
+        },
+        inputs.terminationDate,
+        inputs.reason,
+        inputs.daysWorkedYear,
+        inputs.daysWorkedSemester,
+        inputs.vacationDaysOwed,
+        inputs.pendingSalaryDays,
+        parsedConfig,
+        appliedBases
       );
     } catch (e) {
       console.error('Error calculando liquidación:', e);
       return null;
     }
-  }, [selectedEmp, inputs, activeConfig, alreadyLiquidated]);
+  }, [selectedEmp, inputs, activeConfig, alreadyLiquidated, customBases]);
 
   const hasError = !result && !alreadyLiquidated && !!selectedEmp;
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInputs(prev => ({ ...prev, [e.target.name]: e.target.type === 'number' ? Number(e.target.value) || 0 : e.target.value }));
+  };
+
+  const handleBaseChange = (field: 'severanceBase' | 'premiumBase' | 'vacationBase', val: number) => {
+    setCustomBases(prev => ({ ...prev, [field]: val }));
+    setIsCustomBasesModified(true);
+  };
+
+  const handleResetBases = () => {
+    if (historicalData) {
+      setCustomBases({
+        severanceBase: historicalData.suggestedSeveranceBase,
+        premiumBase: historicalData.suggestedPremiumBase,
+        vacationBase: historicalData.suggestedVacationBase,
+      });
+      setIsCustomBasesModified(false);
+    }
   };
 
   const handleSaveClick = () => {
@@ -202,7 +279,16 @@ export default function LiquidationCalculator({
         totalVacations: result.benefits.vacations,
         totalIndemnity: result.indemnity,
         netPay: result.netPay,
-        calculations: result,
+        calculations: {
+          ...result,
+          customBasesApplied: customBases,
+          historicalSummary: historicalData ? {
+            hasHistory: historicalData.hasHistory,
+            periodsEvaluatedYear: historicalData.periodsEvaluatedYear,
+            periodsEvaluatedSemester: historicalData.periodsEvaluatedSemester,
+            breakdown: historicalData.breakdown,
+          } : null,
+        },
       });
       setIsDialogOpen(false);
       router.refresh();
@@ -314,6 +400,130 @@ export default function LiquidationCalculator({
                 <div className="space-y-2"><Label>Días laborados semestre (Prima)</Label><Input type="number" name="daysWorkedSemester" value={inputs.daysWorkedSemester} onChange={handleChange} min="0" max="180" /></div>
                 <div className="space-y-2"><Label>Días de vacaciones a pagar</Label><Input type="number" step="0.01" name="vacationDaysOwed" value={inputs.vacationDaysOwed} onChange={handleChange} /></div>
                 <div className="space-y-2"><Label>Días pendientes de pago (Último mes)</Label><Input type="number" name="pendingSalaryDays" value={inputs.pendingSalaryDays} onChange={handleChange} min="0" max="30" /></div>
+
+                {/* ── Sección: Bases Salariales para Prestaciones (CST) ── */}
+                <div className="sm:col-span-2 mt-3 p-4 bg-slate-50/80 border border-slate-200 rounded-xl space-y-4">
+                  <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200/80 pb-2.5">
+                    <div className="flex items-center gap-1.5">
+                      <Sparkles className="w-4 h-4 text-blue-600" />
+                      <h4 className="font-semibold text-sm text-slate-800">Bases Salariales para Prestaciones (CST)</h4>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {isLoadingHistory && (
+                        <span className="text-xs bg-slate-200 text-slate-600 px-2 py-0.5 rounded-full animate-pulse">
+                          Calculando...
+                        </span>
+                      )}
+                      {!isLoadingHistory && historicalData?.hasHistory && (
+                        <span className="text-xs bg-emerald-100 text-emerald-800 border border-emerald-200 px-2 py-0.5 rounded-full font-medium flex items-center gap-1">
+                          <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                          {historicalData.periodsEvaluatedYear} nóminas analizadas
+                        </span>
+                      )}
+                      {!isLoadingHistory && !historicalData?.hasHistory && (
+                        <span className="text-xs bg-amber-50 text-amber-800 border border-amber-200 px-2 py-0.5 rounded-full font-medium flex items-center gap-1">
+                          <Info className="w-3 h-3 text-amber-600" />
+                          Sin historial previo (editable)
+                        </span>
+                      )}
+                      {isCustomBasesModified && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={handleResetBases}
+                          className="h-6 px-2 text-xs text-blue-600 hover:text-blue-800 hover:bg-blue-50 flex items-center gap-1"
+                        >
+                          <RotateCcw className="w-3 h-3" /> Restablecer
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Resumen contextual informativo */}
+                  {historicalData?.hasHistory ? (
+                    <div className="text-xs bg-blue-50/80 border border-blue-200 text-blue-950 rounded-lg p-3 space-y-1.5">
+                      <p className="font-semibold flex items-center gap-1.5 text-blue-900">
+                        <History className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+                        Historial acumulado en FarmaNómina para este colaborador:
+                      </p>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-slate-700 pt-1">
+                        <div>
+                          • Recargos nocturnos del año: <strong>{formatCurrency(historicalData.breakdown.totalNightSurchargesYear)}</strong>
+                          <span className="block text-[11px] text-slate-500">Promedio mensual: {formatCurrency(historicalData.breakdown.averageMonthlyNightSurcharges)}</span>
+                        </div>
+                        <div>
+                          • Variables cesantías del año: <strong>{formatCurrency(historicalData.breakdown.totalRecargosYear + historicalData.breakdown.totalCommissionsYear)}</strong>
+                          <span className="block text-[11px] text-slate-500">Promedio mensual: {formatCurrency(historicalData.breakdown.averageMonthlyVariableSeverance)}</span>
+                        </div>
+                      </div>
+                      <p className="text-[11px] text-blue-800 pt-1.5 border-t border-blue-200/60 leading-relaxed">
+                        ⚖️ <strong>Art. 192 CST:</strong> Las vacaciones liquidan con el recargo nocturno promediado pero <strong>no incluyen horas extras ni auxilio de transporte</strong>. Puedes ajustar cualquier valor si necesitas incorporar nóminas físicas anteriores.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="text-xs bg-amber-50/90 border border-amber-200 text-amber-950 rounded-lg p-3">
+                      <p className="font-semibold flex items-center gap-1.5 text-amber-900">
+                        <Info className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                        Sin nóminas variables previas registradas en FarmaNómina
+                      </p>
+                      <p className="text-slate-600 mt-1 leading-relaxed">
+                        Se sugiere el salario básico contractual ({formatCurrency(selectedEmp?.baseSalary || 0)}) + auxilio legal. Si el colaborador tiene historial en papel o años de antigüedad con horas extras o recargos, puedes escribir directamente las bases en las casillas inferiores.
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Entradas editables para las 3 bases CST */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                    <div className="space-y-1.5">
+                      <div className="flex justify-between items-center">
+                        <Label className="text-xs font-semibold text-slate-700">Base Cesantías e Intereses</Label>
+                        <span className="text-[11px] text-slate-400">Anual + Aux</span>
+                      </div>
+                      <Input
+                        type="number"
+                        value={customBases.severanceBase || ''}
+                        onChange={(e) => handleBaseChange('severanceBase', Number(e.target.value) || 0)}
+                        className="font-medium bg-white"
+                      />
+                      <p className="text-[11px] text-slate-500">
+                        Art. 253 CST: Básico + prom. horas extras, recargos y comisiones año + aux. transp.
+                      </p>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <div className="flex justify-between items-center">
+                        <Label className="text-xs font-semibold text-slate-700">Base Prima de Servicios</Label>
+                        <span className="text-[11px] text-slate-400">Semestre + Aux</span>
+                      </div>
+                      <Input
+                        type="number"
+                        value={customBases.premiumBase || ''}
+                        onChange={(e) => handleBaseChange('premiumBase', Number(e.target.value) || 0)}
+                        className="font-medium bg-white"
+                      />
+                      <p className="text-[11px] text-slate-500">
+                        Art. 306 CST: Básico + prom. horas extras y recargos del semestre en curso + aux. transp.
+                      </p>
+                    </div>
+
+                    <div className="space-y-1.5 sm:col-span-2">
+                      <div className="flex justify-between items-center">
+                        <Label className="text-xs font-semibold text-slate-700">Base Vacaciones (Art. 192 CST)</Label>
+                        <span className="text-[11px] text-amber-700 font-medium">Básico + Recargo Nocturno</span>
+                      </div>
+                      <Input
+                        type="number"
+                        value={customBases.vacationBase || ''}
+                        onChange={(e) => handleBaseChange('vacationBase', Number(e.target.value) || 0)}
+                        className="font-medium bg-white"
+                      />
+                      <p className="text-[11px] text-slate-500">
+                        Art. 192 CST: Salario ordinario + recargo nocturno promediado + comisiones. <strong>EXCLUYE horas extras y auxilio de transporte</strong>.
+                      </p>
+                    </div>
+                  </div>
+                </div>
               </div>
             )}
           </CardContent>
@@ -397,10 +607,45 @@ export default function LiquidationCalculator({
                   </div>
                   <div>
                     <h4 className="font-semibold text-slate-700 mb-2 border-b pb-1">Prestaciones Sociales (Proporcional)</h4>
-                    <div className="flex justify-between py-1"><span>Cesantías ({inputs.daysWorkedYear} días)</span><span>{formatCurrency(result.benefits.severance)}</span></div>
-                    <div className="flex justify-between py-1"><span>Intereses sobre Cesantías (12% anual)</span><span>{formatCurrency(result.benefits.interests)}</span></div>
-                    <div className="flex justify-between py-1"><span>Prima de Servicios ({inputs.daysWorkedSemester} días del sem.)</span><span>{formatCurrency(result.benefits.premium)}</span></div>
-                    <div className="flex justify-between py-1"><span>Vacaciones ({inputs.vacationDaysOwed} días adeudados)</span><span>{formatCurrency(result.benefits.vacations)}</span></div>
+                    <div className="py-1">
+                      <div className="flex justify-between">
+                        <span>Cesantías ({inputs.daysWorkedYear} días)</span>
+                        <span className="font-medium">{formatCurrency(result.benefits.severance)}</span>
+                      </div>
+                      <div className="text-[11px] text-slate-500 flex justify-between">
+                        <span>Base aplicada (Art. 253 CST)</span>
+                        <span>{formatCurrency(result.basesUsed.severanceBase)} {result.basesUsed.appliesTransport ? '(Inc. Transp.)' : ''}</span>
+                      </div>
+                    </div>
+                    <div className="py-1">
+                      <div className="flex justify-between">
+                        <span>Intereses sobre Cesantías (12% anual)</span>
+                        <span className="font-medium">{formatCurrency(result.benefits.interests)}</span>
+                      </div>
+                      <div className="text-[11px] text-slate-500">
+                        12% sobre {formatCurrency(result.benefits.severance)} proporcional a {inputs.daysWorkedYear} días
+                      </div>
+                    </div>
+                    <div className="py-1">
+                      <div className="flex justify-between">
+                        <span>Prima de Servicios ({inputs.daysWorkedSemester} días del sem.)</span>
+                        <span className="font-medium">{formatCurrency(result.benefits.premium)}</span>
+                      </div>
+                      <div className="text-[11px] text-slate-500 flex justify-between">
+                        <span>Base aplicada (Art. 306 CST)</span>
+                        <span>{formatCurrency(result.basesUsed.premiumBase)} {result.basesUsed.appliesTransport ? '(Inc. Transp.)' : ''}</span>
+                      </div>
+                    </div>
+                    <div className="py-1">
+                      <div className="flex justify-between">
+                        <span>Vacaciones ({inputs.vacationDaysOwed} días adeudados)</span>
+                        <span className="font-medium">{formatCurrency(result.benefits.vacations)}</span>
+                      </div>
+                      <div className="text-[11px] text-slate-500 flex justify-between">
+                        <span>Base aplicada (Art. 192 CST)</span>
+                        <span>{formatCurrency(result.basesUsed.vacationBase)} (Sin aux. transp. / sin H. extras)</span>
+                      </div>
+                    </div>
                   </div>
                   {result.indemnity > 0 && (
                     <div className="bg-rose-50 p-3 rounded-md text-rose-800 border border-rose-200">
@@ -438,13 +683,22 @@ export default function LiquidationCalculator({
 
       {/* ── Sección C: Historial de Liquidaciones ── */}
       <div className="print:hidden">
-        <div className="flex items-center gap-3 mb-4">
-          <h2 className="text-xl font-semibold tracking-tight">Historial de Liquidaciones Definitivas</h2>
-          {liquidationsHistory.length > 0 && (
-            <span className="bg-slate-100 text-slate-600 text-sm font-medium px-2.5 py-0.5 rounded-full border">
-              {liquidationsHistory.length} registro{liquidationsHistory.length !== 1 ? 's' : ''}
-            </span>
-          )}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+          <div className="flex items-center gap-3">
+            <h2 className="text-xl font-semibold tracking-tight">Historial de Liquidaciones Definitivas</h2>
+            {liquidationsHistory.length > 0 && (
+              <span className="bg-slate-100 text-slate-600 text-sm font-medium px-2.5 py-0.5 rounded-full border">
+                {liquidationsHistory.length} registro{liquidationsHistory.length !== 1 ? 's' : ''}
+              </span>
+            )}
+          </div>
+          <Link
+            href="/auditoria"
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-blue-700 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 border border-blue-200 px-3 py-1.5 rounded-lg transition-colors w-fit"
+          >
+            <ShieldCheck className="w-4 h-4 text-blue-600" />
+            <span>Módulo de Auditoría CST</span>
+          </Link>
         </div>
         {liquidationsHistory.length === 0 ? (
           <Card className="p-6 text-center text-slate-400 text-sm">Aún no se han registrado liquidaciones definitivas.</Card>

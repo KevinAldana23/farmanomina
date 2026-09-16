@@ -12,7 +12,8 @@ import {
   LogOut as LogOutIcon, 
   Download, 
   Menu, 
-  X 
+  X,
+  ShieldCheck
 } from 'lucide-react';
 import LogoutButton from '@/components/LogoutButton';
 
@@ -31,6 +32,7 @@ const NAV_ITEMS = [
   { href: '/empleados', label: 'Colaboradores', icon: Users },
   { href: '/nomina', label: 'Liquidar Nómina', icon: FileText },
   { href: '/liquidacion', label: 'Liquidación Definitiva', icon: LogOutIcon },
+  { href: '/auditoria', label: 'Auditoría CST', icon: ShieldCheck },
   { href: '/reportes', label: 'Reportes y Exportar', icon: Download },
   { href: '/configuracion', label: 'Configuración', icon: Settings },
 ];

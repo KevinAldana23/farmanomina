@@ -210,24 +210,43 @@ export function calculatePayroll(
   };
 }
 
+export interface FinalLiquidationCustomBases {
+  /** Base mensual promedio para Cesantías e Intereses (Art. 253 CST: básico + extras + recargos + comisiones + aux. transporte) */
+  severanceBase?: number;
+  /** Base mensual promedio para Prima de Servicios (Art. 306 CST: básico + extras + recargos + comisiones + aux. transporte del semestre) */
+  premiumBase?: number;
+  /** Base mensual para Vacaciones (Art. 192 CST: básico + promedio recargo nocturno y comisiones, SIN auxilio y SIN horas extras) */
+  vacationBase?: number;
+}
+
+/**
+ * Calcula la liquidación definitiva laboral conforme al Código Sustantivo del Trabajo (CST).
+ * - Art. 253 CST: Base de Cesantías e Intereses (promedio último año si hubo salario variable/extras + auxilio).
+ * - Art. 306 CST: Base de Prima de Servicios (promedio semestre en curso si hubo salario variable/extras + auxilio).
+ * - Art. 192 CST: Base de Vacaciones (salario ordinario + recargo nocturno promediado, excluyendo extras y auxilio).
+ */
 export function calculateFinalLiquidation(
   employee: EmployeeData,
   terminationDate: string,
   reason: string,
-  daysWorkedYear: number, // Días trabajados en el año actual (para cesantías e intereses)
+  daysWorkedYear: number, // Días trabajados en el año actual (para cesantías e intereses - Ley 50/1990)
   daysWorkedSemester: number, // Días trabajados en el semestre actual (para prima)
-  daysForVacations: number, // Días laborados a liquidar para vacaciones
+  daysForVacations: number, // Días adeudados a liquidar para vacaciones (acumulados o proporcionales)
   pendingSalaryDays: number, // Días pendientes de pago en el último mes
-  config: LegalConfig
+  config: LegalConfig,
+  customBases?: FinalLiquidationCustomBases
 ) {
   const { configData } = config;
   const isIntegral = employee.isIntegralSalary;
   
   // 1. Salario Pendiente
   const pendingBasicSalary = (employee.baseSalary / 30) * pendingSalaryDays;
+  const appliesTransport = !isIntegral && employee.baseSalary <= configData.smmlv * configData.topeAuxilioTransporteEnSMMLV;
+  const auxilioTransporte = appliesTransport ? configData.auxilioTransporte : 0;
+  
   let pendingTransport = 0;
-  if (!isIntegral && employee.baseSalary <= configData.smmlv * configData.topeAuxilioTransporteEnSMMLV) {
-    pendingTransport = (configData.auxilioTransporte / 30) * pendingSalaryDays;
+  if (appliesTransport) {
+    pendingTransport = (auxilioTransporte / 30) * pendingSalaryDays;
   }
   
   const totalPendingDevengado = pendingBasicSalary + pendingTransport;
@@ -240,26 +259,43 @@ export function calculateFinalLiquidation(
     pensionDeduction = (pendingBasicSalary * 0.7) * configData.aportes.pensionEmpleado;
   }
   
-  const baseProvisiones = employee.baseSalary + (pendingTransport > 0 ? configData.auxilioTransporte : 0);
+  // 2. Determinación de Bases Salariales según el CST
+  // Base Cesantías e Intereses: Promedio anual o básico + Auxilio de transporte (Art. 253 CST)
+  const defaultSeveranceBase = employee.baseSalary + auxilioTransporte;
+  const severanceBase = (customBases?.severanceBase !== undefined && customBases.severanceBase > 0)
+    ? customBases.severanceBase
+    : defaultSeveranceBase;
 
-  // 2. Prestaciones Sociales
-  // Cesantías
-  const totalSeverance = isIntegral ? 0 : (baseProvisiones * daysWorkedYear) / 360;
-  // Intereses a las Cesantías
-  const totalInterests = isIntegral ? 0 : (totalSeverance * daysWorkedYear * configData.provisiones.interesesCesantias * 12) / 360; // 0.12 = 12% anual
-  // Prima de Servicios
-  const totalPremium = isIntegral ? 0 : (baseProvisiones * daysWorkedSemester) / 360;
+  // Base Prima de Servicios: Promedio semestral o básico + Auxilio de transporte (Art. 306 CST)
+  const defaultPremiumBase = employee.baseSalary + auxilioTransporte;
+  const premiumBase = (customBases?.premiumBase !== undefined && customBases.premiumBase > 0)
+    ? customBases.premiumBase
+    : defaultPremiumBase;
 
-  // Vacaciones (no incluye auxilio de transporte)
-  const pendingVacationDays = daysForVacations; // Ahora recibe directamente los días a pagar
-  const totalVacations = (employee.baseSalary / 30) * pendingVacationDays;
+  // Base Vacaciones: Salario ordinario + Recargo nocturno promediado (Art. 192 CST: SIN auxilio de transporte y SIN horas extras)
+  const defaultVacationBase = employee.baseSalary;
+  const vacationBase = (customBases?.vacationBase !== undefined && customBases.vacationBase > 0)
+    ? customBases.vacationBase
+    : defaultVacationBase;
+
+  // 3. Prestaciones Sociales
+  // Cesantías (Art. 249 y 253 CST)
+  const totalSeverance = isIntegral ? 0 : (severanceBase * daysWorkedYear) / 360;
   
-  // 3. Indemnización (Estimación muy básica)
-  // Nota: Esto depende del contrato y si es sin justa causa
+  // Intereses a las Cesantías (Ley 52 de 1975: 12% anual proporcional a los días laborados)
+  const totalInterests = isIntegral ? 0 : (totalSeverance * daysWorkedYear * configData.provisiones.interesesCesantias * 12) / 360;
+  
+  // Prima de Servicios (Art. 306 CST)
+  const totalPremium = isIntegral ? 0 : (premiumBase * daysWorkedSemester) / 360;
+
+  // Vacaciones (Art. 186 y 192 CST: base mensual / 30 * días de vacaciones adeudados)
+  const pendingVacationDays = daysForVacations;
+  const totalVacations = (vacationBase / 30) * pendingVacationDays;
+  
+  // 4. Indemnización (Estimación según Art. 64 CST)
   let totalIndemnity = 0;
   if (reason === 'despido_sin_justa_causa') {
-    // Estimación para indefinido si gana menos de 10 SMMLV: 30 días primer año, 20 por siguientes
-    // Para simplificar la demo, pondremos 30 días de salario como ejemplo genérico
+    // Estimación para contrato indefinido si gana menos de 10 SMMLV: 30 días primer año
     totalIndemnity = employee.baseSalary; 
   }
 
@@ -280,7 +316,14 @@ export function calculateFinalLiquidation(
       vacations: totalVacations,
       pendingVacationDays: pendingVacationDays
     },
+    basesUsed: {
+      severanceBase,
+      premiumBase,
+      vacationBase,
+      appliesTransport
+    },
     indemnity: totalIndemnity,
     netPay
   };
 }
+

@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { calculatePayroll, LegalConfig, EmployeeData, PayrollNovedades } from '../payrollEngine';
+import { calculatePayroll, calculateFinalLiquidation, LegalConfig, EmployeeData, PayrollNovedades } from '../payrollEngine';
+
 
 const mockConfig: LegalConfig = {
   validFrom: '2026-01-01',
@@ -140,4 +141,74 @@ describe('Payroll Engine', () => {
     // IBC must include base salary and recargos
     expect(result.ibc).toBeCloseTo(2200000 + 42500, 0);
   });
+
+  describe('calculateFinalLiquidation with CST variable bases', () => {
+    const employee: EmployeeData = {
+      baseSalary: 2000000,
+      isIntegralSalary: false,
+      arlRiskClass: 'I',
+      hireDate: '2023-01-01'
+    };
+
+    it('calculates liquidation with default fixed salary and transport subsidy', () => {
+      // 180 días en el año (cesantías), 180 días en el semestre (prima), 15 días vacaciones, 10 días pendientes
+      const res = calculateFinalLiquidation(
+        employee,
+        '2026-06-30',
+        'renuncia',
+        180,
+        180,
+        15,
+        10,
+        mockConfig
+      );
+
+      // Base cesantías = 2,000,000 + 249,095 = 2,249,095
+      expect(res.basesUsed.severanceBase).toBe(2000000 + 249095);
+      expect(res.benefits.severance).toBeCloseTo((2249095 * 180) / 360, 0);
+      
+      // Base prima = 2,249,095
+      expect(res.basesUsed.premiumBase).toBe(2000000 + 249095);
+      expect(res.benefits.premium).toBeCloseTo((2249095 * 180) / 360, 0);
+
+      // Base vacaciones = 2,000,000 (SIN auxilio de transporte por Art. 192 CST)
+      expect(res.basesUsed.vacationBase).toBe(2000000);
+      expect(res.benefits.vacations).toBeCloseTo((2000000 / 30) * 15, 0); // 1,000,000
+    });
+
+    it('applies custom variable bases properly differentiating night surcharges in vacations vs overtime in severance (Art. 192 vs 253 CST)', () => {
+      // Supongamos que por horas extras y recargos:
+      // - Promedio anual con extras y recargos + auxilio = 2,650,000
+      // - Promedio semestral con extras y recargos + auxilio = 2,700,000
+      // - Base vacaciones (básico + solo recargo nocturno promediado, sin horas extras y sin auxilio) = 2,150,000
+      const res = calculateFinalLiquidation(
+        employee,
+        '2026-10-31',
+        'renuncia',
+        300,
+        120,
+        31.25, // 31.25 días acumulados de vacaciones
+        15,
+        mockConfig,
+        {
+          severanceBase: 2650000,
+          premiumBase: 2700000,
+          vacationBase: 2150000
+        }
+      );
+
+      // Cesantías usa 2,650,000
+      expect(res.basesUsed.severanceBase).toBe(2650000);
+      expect(res.benefits.severance).toBeCloseTo((2650000 * 300) / 360, 0);
+
+      // Prima usa 2,700,000
+      expect(res.basesUsed.premiumBase).toBe(2700000);
+      expect(res.benefits.premium).toBeCloseTo((2700000 * 120) / 360, 0);
+
+      // Vacaciones usa 2,150,000 (respetando Art. 192 CST)
+      expect(res.basesUsed.vacationBase).toBe(2150000);
+      expect(res.benefits.vacations).toBeCloseTo((2150000 / 30) * 31.25, 0);
+    });
+  });
 });
+
