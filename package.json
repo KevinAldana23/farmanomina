@@ -13,8 +13,10 @@
   "dependencies": {
     "@base-ui/react": "^1.8.0",
     "@prisma/client": "^6.19.3",
+    "bcryptjs": "^3.0.3",
     "class-variance-authority": "^0.7.1",
     "cn": "^0.3.0",
+    "jose": "^6.2.12",
     "lucide-react": "^1.46.0",
     "next": "16.3.5",
     "react": "19.2.8",
@@ -27,6 +29,7 @@
     "@tailwindcss/postcss": "^4",
     "@testing-library/dom": "^10.4.2",
     "@testing-library/react": "^16.3.3",
+    "@types/bcryptjs": "^2.4.6",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",

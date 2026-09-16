@@ -1,4 +1,5 @@
 import { PrismaClient } from '@prisma/client';
+import bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
 
@@ -77,6 +78,21 @@ async function main() {
       }
     });
   }
+
+  // 3. Admin User
+  const hashedPassword = await bcrypt.hash('Admin2026*', 10);
+  await prisma.user.upsert({
+    where: { email: 'admin@farmacia.com' },
+    update: {
+      password: hashedPassword,
+    },
+    create: {
+      email: 'admin@farmacia.com',
+      name: 'Administradora',
+      password: hashedPassword,
+      role: 'admin',
+    },
+  });
 
   console.log('Database seeded successfully!');
 }
