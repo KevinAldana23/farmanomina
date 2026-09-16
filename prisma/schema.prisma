@@ -1,0 +1,103 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model LegalConfig {
+  id         String    @id @default(uuid())
+  validFrom  DateTime
+  validTo    DateTime?
+  configData String    // JSON stringified
+
+  @@map("legal_configs")
+}
+
+model Employee {
+  id               String    @id @default(uuid())
+  document         String    @unique
+  name             String
+  position         String
+  hireDate         DateTime
+  terminationDate  DateTime?
+  contractType     String    // "fijo", "indefinido", "obra"
+  baseSalary       Float
+  isIntegralSalary Boolean   @default(false)
+  arlRiskClass     String    // "I", "II", "III", "IV", "V"
+  bankName         String?
+  bankAccount      String?
+  isActive         Boolean   @default(true)
+
+  payrollRecords   PayrollRecord[]
+  finalLiquidation FinalLiquidation?
+
+  @@map("employees")
+}
+
+model PayrollPeriod {
+  id          String   @id @default(uuid())
+  startDate   DateTime
+  endDate     DateTime
+  isQuincenal Boolean
+  status      String   @default("draft") // draft, closed
+
+  payrollRecords PayrollRecord[]
+  auditRecord    AuditRecord?
+
+  @@map("payroll_periods")
+}
+
+model PayrollRecord {
+  id               String   @id @default(uuid())
+  employeeId       String
+  periodId         String
+  daysWorked       Int
+  novedades        String   // JSON con recargos, horas extra, otros ingresos/deducciones
+  totalDevengado   Float
+  totalDeducciones Float
+  netPay           Float
+  employerCost     Float
+  calculations     String   // JSON detallado del motor
+
+  employee Employee      @relation(fields: [employeeId], references: [id])
+  period   PayrollPeriod @relation(fields: [periodId], references: [id])
+
+  @@map("payroll_records")
+}
+
+model FinalLiquidation {
+  id                String   @id @default(uuid())
+  employeeId        String   @unique
+  terminationDate   DateTime
+  reason            String
+  baseSalary        Float
+  totalSeverance    Float
+  totalInterests    Float
+  totalPremium      Float
+  totalVacations    Float
+  totalIndemnity    Float
+  netPay            Float
+  calculations      String   // JSON detallado
+
+  employee Employee @relation(fields: [employeeId], references: [id])
+
+  @@map("final_liquidations")
+}
+
+model AuditRecord {
+  id                    String   @id @default(uuid())
+  periodId              String   @unique
+  reportedTotalNet      Float
+  reportedTotalSocial   Float
+  calculatedTotalNet    Float
+  calculatedTotalSocial Float
+  differences           String   // JSON (diferencias por concepto y causas probables)
+  status                String   // "green", "yellow", "red"
+
+  period PayrollPeriod @relation(fields: [periodId], references: [id])
+
+  @@map("audit_records")
+}
