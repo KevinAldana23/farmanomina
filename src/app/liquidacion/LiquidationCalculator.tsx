@@ -288,12 +288,12 @@ export default function LiquidationCalculator({
 
             {/* Formulario (solo si no está bloqueado) */}
             {!alreadyLiquidated && (
-              <div className="grid grid-cols-2 gap-4 pt-2">
-                <div className="space-y-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+                <div className="space-y-2 sm:col-span-2">
                   <Label>Fecha de Retiro</Label>
                   <Input type="date" name="terminationDate" value={inputs.terminationDate} onChange={handleChange} />
                 </div>
-                <div className="space-y-2 col-span-2">
+                <div className="space-y-2 sm:col-span-2">
                   <Label>Motivo</Label>
                   <Select value={inputs.reason} onValueChange={(val) => setInputs(p => ({ ...p, reason: val || 'renuncia' }))}>
                     <SelectTrigger className="w-full">
@@ -306,7 +306,7 @@ export default function LiquidationCalculator({
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="col-span-2 text-sm text-slate-500 pt-2 border-b pb-2">
+                <div className="sm:col-span-2 text-sm text-slate-500 pt-2 border-b pb-2">
                   Tiempos para cálculo proporcional. <strong>¡Se calculan automáticamente!</strong> Ajusta vacaciones si hay días anteriores o si adelantó vacaciones.
                 </div>
                 <div className="space-y-2"><Label>Días laborados este año (Cesantías)</Label><Input type="number" name="daysWorkedYear" value={inputs.daysWorkedYear} onChange={handleChange} min="0" max="360" /></div>
@@ -390,7 +390,7 @@ export default function LiquidationCalculator({
 
         {/* Diálogo de confirmación */}
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogContent className="sm:max-w-md">
+          <DialogContent className="w-[95vw] sm:max-w-md max-h-[90vh] overflow-y-auto p-4 sm:p-6">
             <DialogHeader>
               <DialogTitle>¿Confirmar liquidación definitiva?</DialogTitle>
               <DialogDescription className="pt-2">

@@ -80,7 +80,7 @@ export default function ConfigEditor({ config }: { config: LegalConfig }) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6 max-w-2xl bg-white p-6 rounded-lg shadow-sm border">
+    <form onSubmit={handleSubmit} className="space-y-6 max-w-2xl bg-white p-4 sm:p-6 rounded-lg shadow-sm border">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b pb-3">
         <div>
           <h3 className="text-lg font-bold text-slate-900">
@@ -139,7 +139,7 @@ export default function ConfigEditor({ config }: { config: LegalConfig }) {
       </div>
 
       <div className="pt-2 flex justify-end">
-        <Button type="submit" disabled={loading} className="bg-slate-900 hover:bg-slate-800">
+        <Button type="submit" disabled={loading} className="w-full sm:w-auto bg-slate-900 hover:bg-slate-800">
           {loading ? 'Guardando...' : 'Guardar Cambios'}
         </Button>
       </div>

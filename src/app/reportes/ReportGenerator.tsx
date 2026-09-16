@@ -315,11 +315,11 @@ export default function ReportGenerator({
             </Select>
           </div>
         </div>
-        <div className="flex gap-2">
-          <Button onClick={exportCSV} variant="outline" className="text-emerald-700 border-emerald-200">
+        <div className="flex flex-wrap gap-2 w-full sm:w-auto">
+          <Button variant="outline" onClick={exportCSV} className="flex-1 sm:flex-initial">
             CSV (Plano)
           </Button>
-          <Button onClick={exportExcel} className="bg-emerald-600 hover:bg-emerald-700">
+          <Button onClick={exportExcel} className="flex-1 sm:flex-initial bg-emerald-600 hover:bg-emerald-700">
             <Download className="mr-2 h-4 w-4" /> Exportar a Excel
           </Button>
         </div>
@@ -330,58 +330,58 @@ export default function ReportGenerator({
             No hay datos para este reporte o periodo.
           </div>
         ) : isLiquidaciones ? (
-          <div className="rounded-md border overflow-auto max-h-[460px]">
-            <table className="w-full text-sm text-left">
+          <div className="rounded-md border overflow-x-auto max-h-[460px]">
+            <table className="min-w-[850px] w-full text-sm text-left">
               <thead className="bg-red-50/70 sticky top-0 text-slate-700">
                 <tr>
-                  <th className="p-3 border-b">Documento</th>
-                  <th className="p-3 border-b">Nombre</th>
-                  <th className="p-3 border-b">Cargo</th>
-                  <th className="p-3 border-b">Fecha Retiro</th>
-                  <th className="p-3 border-b">Motivo</th>
-                  <th className="p-3 border-b text-right">Cesantías + Int</th>
-                  <th className="p-3 border-b text-right">Prima</th>
-                  <th className="p-3 border-b text-right">Vacaciones</th>
-                  <th className="p-3 border-b text-right font-semibold text-red-900">Total Liquidado</th>
+                  <th className="p-3 border-b whitespace-nowrap">Documento</th>
+                  <th className="p-3 border-b whitespace-nowrap">Nombre</th>
+                  <th className="p-3 border-b whitespace-nowrap">Cargo</th>
+                  <th className="p-3 border-b whitespace-nowrap">Fecha Retiro</th>
+                  <th className="p-3 border-b whitespace-nowrap">Motivo</th>
+                  <th className="p-3 border-b text-right whitespace-nowrap">Cesantías + Int</th>
+                  <th className="p-3 border-b text-right whitespace-nowrap">Prima</th>
+                  <th className="p-3 border-b text-right whitespace-nowrap">Vacaciones</th>
+                  <th className="p-3 border-b text-right font-semibold text-red-900 whitespace-nowrap">Total Liquidado</th>
                 </tr>
               </thead>
               <tbody>
                 {(reportData as LiquidationReportRow[]).map((row, i) => (
                   <tr key={i} className="border-b last:border-0 hover:bg-slate-50">
-                    <td className="p-3">{row.Documento}</td>
-                    <td className="p-3 font-medium text-slate-900">{row.Nombre}</td>
-                    <td className="p-3 text-slate-600">{row.Cargo}</td>
-                    <td className="p-3 text-xs">{row.FechaRetiro}</td>
-                    <td className="p-3 text-xs text-slate-600">{row.Motivo}</td>
-                    <td className="p-3 text-right">{formatCurrency((row.Cesantias || 0) + (row.InteresesCesantias || 0))}</td>
-                    <td className="p-3 text-right">{formatCurrency(row.PrimaServicios || 0)}</td>
-                    <td className="p-3 text-right">{formatCurrency(row.Vacaciones || 0)}</td>
-                    <td className="p-3 text-right font-bold text-red-700">{formatCurrency(row.TotalLiquidado)}</td>
+                    <td className="p-3 whitespace-nowrap">{row.Documento}</td>
+                    <td className="p-3 font-medium text-slate-900 whitespace-nowrap">{row.Nombre}</td>
+                    <td className="p-3 text-slate-600 whitespace-nowrap">{row.Cargo}</td>
+                    <td className="p-3 text-xs whitespace-nowrap">{row.FechaRetiro}</td>
+                    <td className="p-3 text-xs text-slate-600 whitespace-nowrap">{row.Motivo}</td>
+                    <td className="p-3 text-right whitespace-nowrap">{formatCurrency((row.Cesantias || 0) + (row.InteresesCesantias || 0))}</td>
+                    <td className="p-3 text-right whitespace-nowrap">{formatCurrency(row.PrimaServicios || 0)}</td>
+                    <td className="p-3 text-right whitespace-nowrap">{formatCurrency(row.Vacaciones || 0)}</td>
+                    <td className="p-3 text-right font-bold text-red-700 whitespace-nowrap">{formatCurrency(row.TotalLiquidado)}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
         ) : (
-          <div className="rounded-md border overflow-auto max-h-[400px]">
-            <table className="w-full text-sm text-left">
+          <div className="rounded-md border overflow-x-auto max-h-[400px]">
+            <table className="min-w-[550px] w-full text-sm text-left">
               <thead className="bg-slate-50 sticky top-0 text-slate-700">
                 <tr>
-                  <th className="p-3 border-b">Documento</th>
-                  <th className="p-3 border-b">Nombre</th>
-                  <th className="p-3 border-b">Banco</th>
-                  <th className="p-3 border-b">Cuenta</th>
-                  <th className="p-3 border-b text-right">Neto a Pagar</th>
+                  <th className="p-3 border-b whitespace-nowrap">Documento</th>
+                  <th className="p-3 border-b whitespace-nowrap">Nombre</th>
+                  <th className="p-3 border-b whitespace-nowrap">Banco</th>
+                  <th className="p-3 border-b whitespace-nowrap">Cuenta</th>
+                  <th className="p-3 border-b text-right whitespace-nowrap">Neto a Pagar</th>
                 </tr>
               </thead>
               <tbody>
                 {(reportData as PayrollReportRow[]).map((row, i) => (
                   <tr key={i} className="border-b last:border-0 hover:bg-slate-50">
-                    <td className="p-3">{row.Documento}</td>
-                    <td className="p-3 font-medium">{row.Nombre}</td>
-                    <td className="p-3">{row.Banco}</td>
-                    <td className="p-3">{row.Cuenta}</td>
-                    <td className="p-3 text-right font-bold text-emerald-700">{formatCurrency(row.NetoAPagar)}</td>
+                    <td className="p-3 whitespace-nowrap">{row.Documento}</td>
+                    <td className="p-3 font-medium whitespace-nowrap">{row.Nombre}</td>
+                    <td className="p-3 whitespace-nowrap">{row.Banco}</td>
+                    <td className="p-3 whitespace-nowrap">{row.Cuenta}</td>
+                    <td className="p-3 text-right font-bold text-emerald-700 whitespace-nowrap">{formatCurrency(row.NetoAPagar)}</td>
                   </tr>
                 ))}
               </tbody>

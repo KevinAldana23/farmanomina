@@ -103,13 +103,13 @@ export default function EmployeeTable({ initialEmployees }: { initialEmployees: 
   return (
     <div className="space-y-4">
       <div className="flex justify-end">
-        <Button onClick={openCreateDialog}>
+        <Button onClick={openCreateDialog} className="w-full sm:w-auto">
           <Plus className="mr-2 h-4 w-4" /> Nuevo Empleado
         </Button>
       </div>
       
-      <div className="rounded-md border bg-card text-card-foreground shadow-sm">
-        <Table>
+      <div className="rounded-md border bg-card text-card-foreground shadow-sm overflow-x-auto">
+        <Table className="min-w-[640px]">
           <TableHeader>
             <TableRow>
               <TableHead>Nombre</TableHead>
@@ -124,12 +124,12 @@ export default function EmployeeTable({ initialEmployees }: { initialEmployees: 
           <TableBody>
             {employees.map((emp) => (
               <TableRow key={emp.id}>
-                <TableCell className="font-medium">{emp.name}</TableCell>
-                <TableCell>{emp.document}</TableCell>
-                <TableCell>{emp.position}</TableCell>
-                <TableCell>{formatCurrency(emp.baseSalary)}</TableCell>
-                <TableCell className="capitalize">{emp.contractType}</TableCell>
-                <TableCell>
+                <TableCell className="font-medium whitespace-nowrap">{emp.name}</TableCell>
+                <TableCell className="whitespace-nowrap">{emp.document}</TableCell>
+                <TableCell className="whitespace-nowrap">{emp.position}</TableCell>
+                <TableCell className="whitespace-nowrap">{formatCurrency(emp.baseSalary)}</TableCell>
+                <TableCell className="capitalize whitespace-nowrap">{emp.contractType}</TableCell>
+                <TableCell className="whitespace-nowrap">
                   {emp.finalLiquidation ? (
                     <Badge className="bg-red-100 text-red-700 border border-red-200 hover:bg-red-100">
                       🔴 Liquidado
@@ -140,7 +140,7 @@ export default function EmployeeTable({ initialEmployees }: { initialEmployees: 
                     </Badge>
                   )}
                 </TableCell>
-                <TableCell className="text-right">
+                <TableCell className="text-right whitespace-nowrap">
                   <Button variant="ghost" size="icon" title="Editar" onClick={() => openEditDialog(emp)}>
                     <Edit className="h-4 w-4" />
                   </Button>
@@ -163,7 +163,7 @@ export default function EmployeeTable({ initialEmployees }: { initialEmployees: 
 
       {/* Modal de Crear / Editar Empleado */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="sm:max-w-[600px]">
+        <DialogContent className="w-[95vw] sm:max-w-[600px] max-h-[90vh] overflow-y-auto p-4 sm:p-6">
           <DialogHeader>
             <DialogTitle>{editingEmployee ? 'Editar Empleado' : 'Nuevo Empleado'}</DialogTitle>
           </DialogHeader>
@@ -177,7 +177,7 @@ export default function EmployeeTable({ initialEmployees }: { initialEmployees: 
 
       {/* Modal de Confirmación para Eliminar Colaborador */}
       <Dialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="w-[95vw] sm:max-w-md max-h-[90vh] overflow-y-auto p-4 sm:p-6">
           <DialogHeader>
             <DialogTitle>¿Eliminar colaborador?</DialogTitle>
             <DialogDescription className="pt-2 text-slate-600">

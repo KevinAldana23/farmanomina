@@ -89,7 +89,7 @@ export default function EmployeeForm({ employee, onSuccess, onCancel }: Employee
           <p className="text-xs text-amber-600 mt-2">Si deseas recontratarlo, actualiza la <strong>Fecha de Ingreso</strong> en este formulario. Esto lo habilitará para nuevas nóminas, pero no eliminará el registro histórico de su liquidación anterior.</p>
         </div>
       )}
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div className="space-y-2">
           <Label htmlFor="name">Nombre Completo</Label>
           <Input id="name" name="name" value={formData.name} onChange={handleChange} required />
@@ -157,9 +157,9 @@ export default function EmployeeForm({ employee, onSuccess, onCancel }: Employee
           <Input id="bankAccount" name="bankAccount" value={formData.bankAccount} onChange={handleChange} placeholder="Ej: 123456789" />
         </div>
       </div>
-      <div className="flex justify-end gap-2 pt-4">
-        <Button type="button" variant="outline" onClick={onCancel} disabled={loading}>Cancelar</Button>
-        <Button type="submit" disabled={loading}>
+      <div className="flex flex-col-reverse sm:flex-row justify-end gap-2 pt-4">
+        <Button type="button" variant="outline" onClick={onCancel} disabled={loading} className="w-full sm:w-auto">Cancelar</Button>
+        <Button type="submit" disabled={loading} className="w-full sm:w-auto">
           {loading ? 'Guardando...' : 'Guardar Empleado'}
         </Button>
       </div>

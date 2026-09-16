@@ -30,15 +30,15 @@ export default async function DashboardPage() {
     new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(val);
 
   return (
-    <div className="p-8 max-w-7xl mx-auto space-y-8">
+    <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto space-y-6 sm:space-y-8">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">¡Bienvenida a FarmaNómina!</h1>
-        <p className="text-muted-foreground mt-1">
+        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">¡Bienvenida a FarmaNómina!</h1>
+        <p className="text-sm sm:text-base text-muted-foreground mt-1">
           Aquí tienes un resumen del estado actual de tu farmacia.
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
             <CardTitle className="text-sm font-medium">Empleados Activos</CardTitle>
@@ -80,17 +80,17 @@ export default async function DashboardPage() {
       {recentLiquidations.length > 0 && (
         <Card className="border-red-100 bg-red-50/30">
           <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
               <CardTitle className="text-base font-semibold text-slate-800 flex items-center gap-2">
                 <span>🔒</span> Últimas Liquidaciones Definitivas Registradas
               </CardTitle>
-              <a href="/liquidacion" className="text-xs text-red-600 hover:text-red-700 font-medium hover:underline">
+              <a href="/liquidacion" className="text-xs text-red-600 hover:text-red-700 font-medium hover:underline self-start sm:self-auto">
                 Ver todas en Liquidación →
               </a>
             </div>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
               {recentLiquidations.map((liq) => (
                 <div key={liq.id} className="bg-white border rounded-lg p-3 text-sm space-y-1 shadow-sm">
                   <div className="flex justify-between items-start">
@@ -113,7 +113,7 @@ export default async function DashboardPage() {
         </Card>
       )}
 
-      <div className="mt-8 bg-blue-50 border border-blue-100 p-6 rounded-lg text-blue-900">
+      <div className="mt-8 bg-blue-50 border border-blue-100 p-4 sm:p-6 rounded-lg text-blue-900">
 
         <h3 className="font-semibold text-lg mb-2 flex items-center gap-2">
           💡 Tips de Uso Rápido

@@ -280,8 +280,8 @@ export default function PayrollCalculator({ employees, configs }: { employees: E
           </div>
           
           {/* Sección de Días Trabajados */}
-          <div className="grid grid-cols-2 gap-4 pt-1">
-            <div className="space-y-1 col-span-2 sm:col-span-1">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
+            <div className="space-y-1 col-span-1">
               <Label className="text-sm font-semibold text-slate-700">Días Trabajados</Label>
               <Input 
                 type="number" 
@@ -409,7 +409,7 @@ export default function PayrollCalculator({ employees, configs }: { employees: E
             <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
               Ajustes y Novedades Monetarias
             </h4>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="space-y-1">
                 <Label className="text-xs">Otros Ingresos ($)</Label>
                 <Input 
@@ -443,17 +443,17 @@ export default function PayrollCalculator({ employees, configs }: { employees: E
       {result && (
         <Card className="bg-slate-50 border-emerald-100 print:shadow-none print:border-none print:bg-white print:col-span-2">
           <CardHeader className="bg-emerald-50/50 pb-4 border-b print:bg-white print:border-b-2 print:border-black">
-            <CardTitle className="text-emerald-800 text-lg flex justify-between items-center print:text-black">
-              <span>Desprendible de Pago - {selectedEmp.name}</span>
-              <div className="flex items-center gap-4">
-                <span className="font-bold">{formatCurrency(result.netPay)} Neto</span>
+            <CardTitle className="text-emerald-800 text-base sm:text-lg flex flex-col sm:flex-row sm:items-center justify-between gap-3 print:text-black">
+              <span className="truncate">Desprendible de Pago - {selectedEmp.name}</span>
+              <div className="flex items-center justify-between sm:justify-end gap-3 w-full sm:w-auto">
+                <span className="font-bold text-base sm:text-lg">{formatCurrency(result.netPay)} Neto</span>
                 <button 
                   onClick={() => window.print()}
-                  className="p-2 bg-emerald-600 text-white rounded-md text-sm hover:bg-emerald-700 print:hidden flex items-center gap-2"
+                  className="px-3 py-1.5 bg-emerald-600 text-white rounded-md text-xs sm:text-sm hover:bg-emerald-700 print:hidden flex items-center gap-1.5 transition-colors"
                   title="Imprimir Desprendible"
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
-                  Imprimir
+                  <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+                  <span>Imprimir</span>
                 </button>
               </div>
             </CardTitle>
@@ -612,7 +612,7 @@ export default function PayrollCalculator({ employees, configs }: { employees: E
 
           {/* Diálogo de Confirmación para Guardar Nómina */}
           <Dialog open={isSaveDialogOpen} onOpenChange={setIsSaveDialogOpen}>
-            <DialogContent className="sm:max-w-md">
+            <DialogContent className="w-[95vw] sm:max-w-md max-h-[90vh] overflow-y-auto p-4 sm:p-6">
               <DialogHeader>
                 <DialogTitle>¿Confirmar guardado de nómina?</DialogTitle>
                 <DialogDescription className="pt-2 text-slate-600 space-y-2">
