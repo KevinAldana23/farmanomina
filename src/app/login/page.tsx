@@ -20,7 +20,7 @@ export default function LoginPage() {
           </p>
         </div>
 
-        <div className="bg-white rounded-2xl p-8 shadow-2xl border border-slate-100">
+        <div className="bg-white rounded-2xl p-8 shadow-2xl border border-slate-100 text-slate-900">
           <div className="mb-6">
             <h2 className="text-xl font-bold text-slate-900">Iniciar Sesión</h2>
             <p className="text-xs text-slate-500 mt-0.5">
