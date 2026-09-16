@@ -6,6 +6,8 @@ import { Users, FileText, Settings, Activity, LogOut, Download } from "lucide-re
 
 const inter = Inter({ subsets: ["latin"] });
 
+export const dynamic = 'force-dynamic';
+
 export const metadata: Metadata = {
   title: "FarmaNómina",
   description: "Sistema de nómina para Farmacia Su Salud",
